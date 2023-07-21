@@ -4,17 +4,15 @@ import (
 	"gostarter-backend/helpers/token"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 )
 
-func JwtAuthMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
+func JwtAuthMiddleware() fiber.Handler {
+	return func(c *fiber.Ctx) error {
 		err := token.TokenValid(c)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
-			c.Abort()
-			return
+			return c.Status(http.StatusUnauthorized).JSON(fiber.Map{"message": "Unauthorized"})
 		}
-		c.Next()
+		return c.Next()
 	}
 }

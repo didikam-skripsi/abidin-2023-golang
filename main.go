@@ -8,6 +8,6 @@ import (
 func main() {
 	models.ConnectDataBase()
 	r := routes.SetupRouter()
-	r.Run(":8080")
+	r.Listen(":8080")
 
 }

@@ -1,6 +1,6 @@
 package response
 
-import "github.com/gin-gonic/gin"
+import "github.com/gofiber/fiber/v2"
 
 type Response struct {
 	Code    int         `json:"code"`
@@ -8,12 +8,12 @@ type Response struct {
 	Data    interface{} `json:"data"`
 }
 
-func APIResponse(context *gin.Context, code int, message string, data interface{}) {
+func APIResponse(c *fiber.Ctx, code int, message string, data interface{}) error {
 	jsonResponse := Response{
 		Code:    code,
 		Message: message,
 		Data:    data,
 	}
 
-	context.JSON(code, jsonResponse)
+	return c.Status(code).JSON(jsonResponse)
 }

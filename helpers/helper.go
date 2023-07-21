@@ -1,28 +1,34 @@
 package helper
 
 import (
-	"fmt"
-
 	"github.com/go-playground/validator/v10"
 )
 
-type ValidationError struct {
-	Field   string `json:"field"`
-	Message string `json:"message"`
+type ErrorResponse struct {
+	Error       bool
+	FailedField string
+	Tag         string
+	Value       interface{}
 }
 
-func FormatValidationError(err error) []ValidationError {
-	var errors []ValidationError
-	if validationErrors, ok := err.(validator.ValidationErrors); ok {
-		for _, e := range validationErrors {
-			field := e.Field()
-			message := fmt.Sprintf("Field validation for '%s' failed on the '%s' tag", field, e.Tag())
-			errors = append(errors, ValidationError{
-				Field:   field,
-				Message: message,
-			})
+var validate = validator.New()
+
+func Validate(data interface{}) []ErrorResponse {
+	validationErrors := []ErrorResponse{}
+
+	errs := validate.Struct(data)
+	if errs != nil {
+		for _, err := range errs.(validator.ValidationErrors) {
+			var elem ErrorResponse
+
+			elem.FailedField = err.Field() // Export struct field name
+			elem.Tag = err.Tag()           // Export struct tag
+			elem.Value = err.Value()       // Export field value
+			elem.Error = true
+
+			validationErrors = append(validationErrors, elem)
 		}
 	}
 
-	return errors
+	return validationErrors
 }

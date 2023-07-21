@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 	"github.com/jinzhu/gorm"
 )
 
@@ -18,12 +18,12 @@ type ProductController struct {
 	productResponse response.ProductResponse
 }
 
-func (this ProductController) GetPostPaginate(c *gin.Context) {
+func (this ProductController) GetPostPaginate(c *fiber.Ctx) error {
 	var products []models.Product
 	var totalRecords int64
 
-	page := c.DefaultQuery("page", "1")
-	perPage := c.DefaultQuery("per_page", "10")
+	page := c.Query("page", "1")
+	perPage := c.Query("per_page", "10")
 	pageInt, _ := strconv.Atoi(page)
 	perPageInt, _ := strconv.Atoi(perPage)
 	models.DB.Model(&models.Product{}).Count(&totalRecords)
@@ -31,132 +31,125 @@ func (this ProductController) GetPostPaginate(c *gin.Context) {
 	query := models.DB.Limit(perPageInt).Offset(offset)
 	if err := query.Find(&products).Error; err != nil {
 		response.APIResponse(c, http.StatusInternalServerError, "Product find failed", nil)
-		return
+		return nil
 	}
-	response := gin.H{
+	response := fiber.Map{
 		"current_page": pageInt,
 		"per_page":     perPageInt,
 		"total":        totalRecords,
 		"data":         this.productResponse.Collections(products),
 	}
 
-	c.JSON(http.StatusOK, response)
+	return c.JSON(response)
 }
 
-func (this ProductController) Index(c *gin.Context) {
+func (this ProductController) Index(c *fiber.Ctx) error {
 	var products []models.Product
 	models.DB.Find(&products)
-	c.JSON(http.StatusOK, gin.H{"products": this.productResponse.Collections(products)})
+	c.JSON(fiber.Map{"products": this.productResponse.Collections(products)})
+	return nil
 }
 
-func (this ProductController) Store(c *gin.Context) {
+func (this ProductController) Store(c *fiber.Ctx) error {
 	var input request.ProductRequest
 
-	if err := c.ShouldBindJSON(&input); err != nil {
-		errors := helper.FormatValidationError(err)
-		response.APIResponse(c, http.StatusUnprocessableEntity, "Input field invalid", errors)
-		return
+	c.BodyParser(&input)
+	if errs := helper.Validate(input); len(errs) > 0 && errs[0].Error {
+		return response.APIResponse(c, http.StatusBadRequest, "Input field invalid", errs)
 	}
 
 	product, err := this.productService.Store(input)
 	if err != nil {
 		response.APIResponse(c, http.StatusInternalServerError, "Failed to create product", err)
-		return
+		return nil
 	}
 	response.APIResponse(c, http.StatusOK, "Product created successfully", this.productResponse.Response(product))
-	return
+	return nil
 }
 
-func (this ProductController) Show(c *gin.Context) {
-	var input request.ProductRequestID
-
-	if err := c.ShouldBindUri(&input); err != nil {
-		errors := helper.FormatValidationError(err)
-		response.APIResponse(c, http.StatusUnprocessableEntity, "Input field invalid", errors)
-		return
+func (this ProductController) Show(c *fiber.Ctx) error {
+	input_id := c.Params("id")
+	parse_id, err := strconv.ParseUint(input_id, 10, 64)
+	if err != nil {
+		return response.APIResponse(c, http.StatusBadRequest, "Invalid ID", err)
 	}
-
-	product, err := this.productService.Show(input.ID)
+	ID := uint(parse_id)
+	product, err := this.productService.Show(ID)
 
 	if err != nil {
 		switch err {
 		case gorm.ErrRecordNotFound:
 			response.APIResponse(c, http.StatusNotFound, "Data not found", err)
-			return
+			return nil
 		default:
 			response.APIResponse(c, http.StatusInternalServerError, "Failed to show product", err)
-			return
+			return nil
 		}
 	}
 	response.APIResponse(c, http.StatusOK, "Product show successfully", this.productResponse.Response(product))
-	return
+	return nil
 }
 
-func (this ProductController) Update(c *gin.Context) {
+func (this ProductController) Update(c *fiber.Ctx) error {
 	var input request.ProductRequest
-	var inputID request.ProductRequestID
-
-	if err := c.ShouldBindUri(&inputID); err != nil {
-		errors := helper.FormatValidationError(err)
-		response.APIResponse(c, http.StatusUnprocessableEntity, "ID field invalid", errors)
-		return
+	input_id := c.Params("id")
+	parse_id, err := strconv.Atoi(input_id)
+	if err != nil {
+		return response.APIResponse(c, http.StatusBadRequest, "Invalid ID", err)
 	}
+	inputID := uint(parse_id)
 
-	if err := c.ShouldBindJSON(&input); err != nil {
-		errors := helper.FormatValidationError(err)
-		response.APIResponse(c, http.StatusUnprocessableEntity, "Input field invalid", errors)
-		return
+	c.BodyParser(&input)
+	if errs := helper.Validate(input); len(errs) > 0 && errs[0].Error {
+		return response.APIResponse(c, http.StatusBadRequest, "Input field invalid", errs)
 	}
-
-	product, err := this.productService.Show(inputID.ID)
+	product, err := this.productService.Show(inputID)
 	if err != nil {
 		switch err {
 		case gorm.ErrRecordNotFound:
 			response.APIResponse(c, http.StatusNotFound, "Data not found", err)
-			return
+			return nil
 		default:
 			response.APIResponse(c, http.StatusInternalServerError, "Failed to find product", err)
-			return
+			return nil
 		}
 	}
 
-	product, err = this.productService.Update(inputID.ID, input)
+	product, err = this.productService.Update(inputID, input)
 	if err != nil {
 		response.APIResponse(c, http.StatusInternalServerError, "Failed to update product", err)
-		return
+		return nil
 	}
 
 	response.APIResponse(c, http.StatusOK, "Product updated successfully", this.productResponse.Response(product))
-	return
+	return nil
 }
 
-func (this ProductController) Delete(c *gin.Context) {
-	var inputID request.ProductRequestID
-
-	if err := c.ShouldBindUri(&inputID); err != nil {
-		errors := helper.FormatValidationError(err)
-		response.APIResponse(c, http.StatusUnprocessableEntity, "ID field invalid", errors)
-		return
+func (this ProductController) Delete(c *fiber.Ctx) error {
+	input_id := c.Params("id")
+	parse_id, err := strconv.Atoi(input_id)
+	if err != nil {
+		return response.APIResponse(c, http.StatusBadRequest, "Invalid ID", err)
 	}
-
-	product, err := this.productService.Show(inputID.ID)
+	inputID := uint(parse_id)
+	product, err := this.productService.Show(inputID)
 	if err != nil {
 		switch err {
 		case gorm.ErrRecordNotFound:
 			response.APIResponse(c, http.StatusNotFound, "Data not found", err)
-			return
+			return nil
 		default:
 			response.APIResponse(c, http.StatusInternalServerError, "Failed to find product", err)
-			return
+			return nil
 		}
 	}
 
-	err = this.productService.Delete(inputID.ID)
+	err = this.productService.Delete(inputID)
 	if err != nil {
 		response.APIResponse(c, http.StatusInternalServerError, "Failed to delete product", err)
-		return
+		return nil
 	}
 
 	response.APIResponse(c, http.StatusOK, "Product delete successfully", this.productResponse.Response(product))
-	return
+	return nil
 }

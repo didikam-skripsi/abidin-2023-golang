@@ -1,11 +1,11 @@
 package request
 
 type RegisterRequest struct {
-	Username string `json:"username" binding:"required"`
-	Password string `json:"password" binding:"required"`
+	Username string `validate:"required"`
+	Password string `validate:"required"`
 }
 
 type LoginRequest struct {
-	Username string `json:"username" binding:"required"`
-	Password string `json:"password" binding:"required"`
+	Username string `validate:"required,email"`
+	Password string `validate:"required"`
 }

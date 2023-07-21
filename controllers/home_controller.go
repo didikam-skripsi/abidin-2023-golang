@@ -1,16 +1,14 @@
 package controllers
 
 import (
-	"net/http"
-
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 )
 
 type HomeController struct{}
 
-func (con HomeController) Index(c *gin.Context) {
-	data := gin.H{
-		"title": "hello world",
+func (con HomeController) Index(c *fiber.Ctx) error {
+	data := fiber.Map{
+		"title": "hello world gofiber",
 	}
-	c.JSON(http.StatusOK, data)
+	return c.JSON(data)
 }

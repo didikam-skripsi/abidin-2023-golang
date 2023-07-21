@@ -4,37 +4,34 @@ import (
 	"gostarter-backend/controllers"
 	"gostarter-backend/middlewares"
 
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
-func SetupRouter() *gin.Engine {
+func SetupRouter() *fiber.App {
 	HomeController := controllers.HomeController{}
 	AuthController := controllers.AuthController{}
 	ProductController := controllers.ProductController{}
 
-	router := gin.Default()
-	router.Use(cors.Default())
+	app := fiber.New()
+	app.Use(cors.New())
 
-	router.GET("/home", HomeController.Index)
+	app.Get("/home", HomeController.Index)
 
-	public := router.Group("/api")
+	public := app.Group("/api")
 	{
-		public.POST("/register", AuthController.Register)
-		public.POST("/login", AuthController.Login)
+		public.Post("/register", AuthController.Register)
+		public.Post("/login", AuthController.Login)
 
-		auth := router.Group("/api/admin")
-		{
-			auth.Use(middlewares.JwtAuthMiddleware())
-			auth.GET("/user", AuthController.CurrentUser)
-
-			auth.GET("/product", ProductController.GetPostPaginate)
-			auth.POST("/product", ProductController.Store)
-			auth.GET("/product/:id", ProductController.Show)
-			auth.PUT("/product/:id", ProductController.Update)
-			auth.DELETE("/product/:id", ProductController.Delete)
-		}
+		auth := app.Group("/api/admin")
+		auth.Use(middlewares.JwtAuthMiddleware())
+		auth.Get("/user", AuthController.CurrentUser)
+		auth.Get("/product", ProductController.GetPostPaginate)
+		auth.Post("/product", ProductController.Store)
+		auth.Get("/product/:id", ProductController.Show)
+		auth.Put("/product/:id", ProductController.Update)
+		auth.Delete("/product/:id", ProductController.Delete)
 	}
 
-	return router
+	return app
 }
