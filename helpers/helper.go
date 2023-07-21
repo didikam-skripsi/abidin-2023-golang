@@ -13,14 +13,15 @@ type ValidationError struct {
 
 func FormatValidationError(err error) []ValidationError {
 	var errors []ValidationError
-
-	for _, e := range err.(validator.ValidationErrors) {
-		field := e.Field()
-		message := fmt.Sprintf("Field validation for '%s' failed on the '%s' tag", field, e.Tag())
-		errors = append(errors, ValidationError{
-			Field:   field,
-			Message: message,
-		})
+	if validationErrors, ok := err.(validator.ValidationErrors); ok {
+		for _, e := range validationErrors {
+			field := e.Field()
+			message := fmt.Sprintf("Field validation for '%s' failed on the '%s' tag", field, e.Tag())
+			errors = append(errors, ValidationError{
+				Field:   field,
+				Message: message,
+			})
+		}
 	}
 
 	return errors

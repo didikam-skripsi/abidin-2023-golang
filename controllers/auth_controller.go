@@ -1,79 +1,76 @@
 package controllers
 
 import (
+	helper "gostarter-backend/helpers"
 	"gostarter-backend/helpers/token"
-	"gostarter-backend/models"
 	"gostarter-backend/request"
+	"gostarter-backend/response"
+	"gostarter-backend/services"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-type AuthController struct{}
+type AuthController struct {
+	userService  services.UserService
+	userResponse response.UserResponse
+}
 
-func (con AuthController) Register(c *gin.Context) {
+func (this AuthController) Register(c *gin.Context) {
 	var input request.RegisterRequest
+
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		errors := helper.FormatValidationError(err)
+		response.APIResponse(c, http.StatusBadRequest, "Input field invalid", errors)
 		return
 	}
 
-	u := models.User{}
-
-	u.Username = input.Username
-	u.Password = input.Password
-
-	_, err := u.SaveUser()
+	user, err := this.userService.Register(input)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.APIResponse(c, http.StatusInternalServerError, "Register failed", err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "registration success"})
+	response.APIResponse(c, http.StatusOK, "Registration successfully", this.userResponse.Response(user))
 
 }
 
-func (con AuthController) Login(c *gin.Context) {
-
+func (this AuthController) Login(c *gin.Context) {
 	var input request.LoginRequest
 
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		errors := helper.FormatValidationError(err)
+		response.APIResponse(c, http.StatusBadRequest, "Input field invalid", errors)
 		return
 	}
 
-	u := models.User{}
-
-	u.Username = input.Username
-	u.Password = input.Password
-
-	token, err := models.LoginCheck(u.Username, u.Password)
+	token, err := this.userService.LoginCheck(input)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "username or password is incorrect."})
+		response.APIResponse(c, http.StatusBadRequest, "username or password is incorrect", nil)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"token": token})
+	response.APIResponse(c, http.StatusOK, "Login successfully", gin.H{"token": token})
+	return
 
 }
 
-func (con AuthController) CurrentUser(c *gin.Context) {
+func (this AuthController) CurrentUser(c *gin.Context) {
 
 	user_id, err := token.ExtractTokenID(c)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.APIResponse(c, http.StatusBadRequest, "Token failed", err.Error())
 		return
 	}
-
-	u, err := models.GetUserByID(user_id)
-
+	user, err := this.userService.GetUserByID(user_id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.APIResponse(c, http.StatusBadRequest, "Get user failed", nil)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "success", "data": u})
+	response.APIResponse(c, http.StatusOK, "Show data successfully", this.userResponse.Response(user))
+	return
 }
