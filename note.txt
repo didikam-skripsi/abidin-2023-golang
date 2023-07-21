@@ -1,0 +1,9 @@
+https://seefnasrul.medium.com/create-your-first-go-rest-api-with-jwt-authentication-in-gin-framework-dbe5bda72817
+
+go mod init gostarter-backend
+go mod tidy
+go get -u github.com/gin-gonic/gin
+go get -u github.com/jinzhu/gorm
+go get -u github.com/dgrijalva/jwt-go
+go get -u github.com/joho/godotenv
+go get -u golang.org/x/crypto
