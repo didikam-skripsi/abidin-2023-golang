@@ -23,11 +23,10 @@ func SetupRouter() *fiber.App {
 	{
 		public.Post("/register", AuthController.Register)
 		public.Post("/login", AuthController.Login)
-
 		auth := app.Group("/api/admin")
 		auth.Use(middlewares.JwtAuthMiddleware())
 		auth.Get("/user", AuthController.CurrentUser)
-		app.Use(middlewares.JwtAuthRolesMiddleware(models.RoleAdmin))
+		auth.Use(middlewares.JwtAuthRolesMiddleware(models.RoleAdmin))
 		auth.Get("/product", ProductController.GetPostPaginate)
 		auth.Post("/product", ProductController.Store)
 		auth.Get("/product/:uuid", ProductController.Show)
