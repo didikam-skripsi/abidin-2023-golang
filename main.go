@@ -7,6 +7,7 @@ import (
 
 func main() {
 	models.ConnectDataBase()
+	// models.SeedProducts()
 	r := routes.SetupRouter()
 	r.Listen(":8080")
 
