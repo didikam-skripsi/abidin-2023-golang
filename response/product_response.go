@@ -1,30 +1,36 @@
 package response
 
-import "gostarter-backend/models"
+import (
+	"gostarter-backend/models"
+
+	"github.com/google/uuid"
+)
 
 type ProductResponse struct {
-	ID          uint   `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
+	UUID        uuid.UUID   `json:"uuid"`
+	Name        string      `json:"name"`
+	Description string      `json:"description"`
+	User        interface{} `json:"user"`
 }
 
 func (res ProductResponse) Collections(datas []models.Product) interface{} {
 	collection := make([]ProductResponse, 0)
-
-	for index := range datas {
-		collection = append(collection, ProductResponse{
-			ID:          datas[index].ID,
-			Name:        datas[index].Name,
-			Description: datas[index].Description,
-		})
+	for _, data := range datas {
+		collection = append(collection, res.Response(data))
 	}
 	return collection
 }
 
-func (res ProductResponse) Response(data models.Product) interface{} {
-	return ProductResponse{
-		ID:          data.ID,
-		Name:        data.Name,
-		Description: data.Description,
+func (this ProductResponse) Response(data models.Product) ProductResponse {
+	this.UUID = data.UUID
+	this.Name = data.Name
+	this.Description = data.Description
+
+	if data.User != nil {
+		this.User = (&UserResponse{}).Response(data.User)
+	} else {
+		this.User = nil
 	}
+
+	return this
 }

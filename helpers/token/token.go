@@ -2,6 +2,8 @@ package token
 
 import (
 	"fmt"
+	"gostarter-backend/models"
+	"gostarter-backend/response"
 	"os"
 	"strconv"
 	"strings"
@@ -9,9 +11,10 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
-func GenerateToken(user_id uint) (string, error) {
+func GenerateToken(user models.User) (string, error) {
 
 	token_lifespan, err := strconv.Atoi(os.Getenv("TOKEN_HOUR_LIFESPAN"))
 
@@ -21,12 +24,10 @@ func GenerateToken(user_id uint) (string, error) {
 
 	claims := jwt.MapClaims{}
 	claims["authorized"] = true
-	claims["user_id"] = user_id
+	claims["user"] = response.UserResponse{}.ResponseWithAccess(&user)
 	claims["exp"] = time.Now().Add(time.Hour * time.Duration(token_lifespan)).Unix()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
 	return token.SignedString([]byte(os.Getenv("API_SECRET")))
-
 }
 
 func TokenValid(c *fiber.Ctx) error {
@@ -55,8 +56,8 @@ func ExtractToken(c *fiber.Ctx) string {
 	return ""
 }
 
-func ExtractTokenID(c *fiber.Ctx) (uint, error) {
-
+func ExtractTokenUser(c *fiber.Ctx) (models.User, error) {
+	user := models.User{}
 	tokenString := ExtractToken(c)
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -65,15 +66,24 @@ func ExtractTokenID(c *fiber.Ctx) (uint, error) {
 		return []byte(os.Getenv("API_SECRET")), nil
 	})
 	if err != nil {
-		return 0, err
+		return user, err
 	}
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if ok && token.Valid {
-		uid, err := strconv.ParseUint(fmt.Sprintf("%.0f", claims["user_id"]), 10, 32)
-		if err != nil {
-			return 0, err
+		authUser := claims["user"].(map[string]interface{})
+		if uuidStr, ok := authUser["uuid"].(string); ok {
+			userUUID, err := uuid.Parse(uuidStr)
+			if err != nil {
+				return user, err
+			}
+			user.UUID = userUUID
 		}
-		return uint(uid), nil
+		if username, ok := authUser["username"].(string); ok {
+			user.Username = username
+		}
+		if role, ok := authUser["role"].(string); ok {
+			user.Role = models.RoleType(role)
+		}
 	}
-	return 0, nil
+	return user, nil
 }

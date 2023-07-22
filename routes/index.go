@@ -3,6 +3,7 @@ package routes
 import (
 	"gostarter-backend/controllers"
 	"gostarter-backend/middlewares"
+	"gostarter-backend/models"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -26,11 +27,12 @@ func SetupRouter() *fiber.App {
 		auth := app.Group("/api/admin")
 		auth.Use(middlewares.JwtAuthMiddleware())
 		auth.Get("/user", AuthController.CurrentUser)
+		app.Use(middlewares.JwtAuthRolesMiddleware(models.RoleAdmin))
 		auth.Get("/product", ProductController.GetPostPaginate)
 		auth.Post("/product", ProductController.Store)
-		auth.Get("/product/:id", ProductController.Show)
-		auth.Put("/product/:id", ProductController.Update)
-		auth.Delete("/product/:id", ProductController.Delete)
+		auth.Get("/product/:uuid", ProductController.Show)
+		auth.Put("/product/:uuid", ProductController.Update)
+		auth.Delete("/product/:uuid", ProductController.Delete)
 	}
 
 	return app

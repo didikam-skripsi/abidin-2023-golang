@@ -55,14 +55,12 @@ func (this AuthController) Login(c *fiber.Ctx) error {
 }
 
 func (this AuthController) CurrentUser(c *fiber.Ctx) error {
-
-	user_id, err := token.ExtractTokenID(c)
-
+	authUser, err := token.ExtractTokenUser(c)
 	if err != nil {
-		response.APIResponse(c, http.StatusBadRequest, "Token failed", err.Error())
+		response.APIResponse(c, http.StatusUnauthorized, "Token failed", err.Error())
 		return nil
 	}
-	user, err := this.userService.GetUserByID(user_id)
+	user, err := this.userService.GetUserByUUID(authUser.UUID)
 	if err != nil {
 		response.APIResponse(c, http.StatusBadRequest, "Get user failed", nil)
 		return nil

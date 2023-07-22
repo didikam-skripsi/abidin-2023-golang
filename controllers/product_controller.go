@@ -2,6 +2,7 @@ package controllers
 
 import (
 	helper "gostarter-backend/helpers"
+	"gostarter-backend/helpers/token"
 	"gostarter-backend/models"
 	"gostarter-backend/request"
 	"gostarter-backend/response"
@@ -10,6 +11,7 @@ import (
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 )
 
@@ -29,8 +31,8 @@ func (this ProductController) GetPostPaginate(c *fiber.Ctx) error {
 	models.DB.Model(&models.Product{}).Count(&totalRecords)
 	offset := (pageInt - 1) * perPageInt
 	query := models.DB.Limit(perPageInt).Offset(offset)
-	if err := query.Find(&products).Error; err != nil {
-		response.APIResponse(c, http.StatusInternalServerError, "Product find failed", nil)
+	if err := query.Preload("User").Find(&products).Error; err != nil {
+		response.APIResponse(c, http.StatusInternalServerError, "Product find failed", err.Error())
 		return nil
 	}
 	response := fiber.Map{
@@ -57,8 +59,12 @@ func (this ProductController) Store(c *fiber.Ctx) error {
 	if errs := helper.Validate(input); len(errs) > 0 && errs[0].Error {
 		return response.APIResponse(c, http.StatusBadRequest, "Input field invalid", errs)
 	}
-
-	product, err := this.productService.Store(input)
+	authUser, err := token.ExtractTokenUser(c)
+	if err != nil {
+		response.APIResponse(c, http.StatusUnauthorized, "Token failed", err.Error())
+		return nil
+	}
+	product, err := this.productService.Store(authUser.UUID, input)
 	if err != nil {
 		response.APIResponse(c, http.StatusInternalServerError, "Failed to create product", err)
 		return nil
@@ -68,13 +74,12 @@ func (this ProductController) Store(c *fiber.Ctx) error {
 }
 
 func (this ProductController) Show(c *fiber.Ctx) error {
-	input_id := c.Params("id")
-	parse_id, err := strconv.ParseUint(input_id, 10, 64)
+	input_uuid := c.Params("uuid")
+	parse_uuid, err := uuid.Parse(input_uuid)
 	if err != nil {
 		return response.APIResponse(c, http.StatusBadRequest, "Invalid ID", err)
 	}
-	ID := uint(parse_id)
-	product, err := this.productService.Show(ID)
+	product, err := this.productService.Show(parse_uuid)
 
 	if err != nil {
 		switch err {
@@ -92,18 +97,17 @@ func (this ProductController) Show(c *fiber.Ctx) error {
 
 func (this ProductController) Update(c *fiber.Ctx) error {
 	var input request.ProductRequest
-	input_id := c.Params("id")
-	parse_id, err := strconv.Atoi(input_id)
+	input_uuid := c.Params("id")
+	parse_uuid, err := uuid.Parse(input_uuid)
 	if err != nil {
 		return response.APIResponse(c, http.StatusBadRequest, "Invalid ID", err)
 	}
-	inputID := uint(parse_id)
 
 	c.BodyParser(&input)
 	if errs := helper.Validate(input); len(errs) > 0 && errs[0].Error {
 		return response.APIResponse(c, http.StatusBadRequest, "Input field invalid", errs)
 	}
-	product, err := this.productService.Show(inputID)
+	product, err := this.productService.Show(parse_uuid)
 	if err != nil {
 		switch err {
 		case gorm.ErrRecordNotFound:
@@ -115,7 +119,7 @@ func (this ProductController) Update(c *fiber.Ctx) error {
 		}
 	}
 
-	product, err = this.productService.Update(inputID, input)
+	product, err = this.productService.Update(parse_uuid, input)
 	if err != nil {
 		response.APIResponse(c, http.StatusInternalServerError, "Failed to update product", err)
 		return nil
@@ -126,13 +130,12 @@ func (this ProductController) Update(c *fiber.Ctx) error {
 }
 
 func (this ProductController) Delete(c *fiber.Ctx) error {
-	input_id := c.Params("id")
-	parse_id, err := strconv.Atoi(input_id)
+	input_uuid := c.Params("uuid")
+	parse_uuid, err := uuid.Parse(input_uuid)
 	if err != nil {
-		return response.APIResponse(c, http.StatusBadRequest, "Invalid ID", err)
+		return response.APIResponse(c, http.StatusBadRequest, "Invalid UUID", err)
 	}
-	inputID := uint(parse_id)
-	product, err := this.productService.Show(inputID)
+	product, err := this.productService.Show(parse_uuid)
 	if err != nil {
 		switch err {
 		case gorm.ErrRecordNotFound:
@@ -144,7 +147,7 @@ func (this ProductController) Delete(c *fiber.Ctx) error {
 		}
 	}
 
-	err = this.productService.Delete(inputID)
+	err = this.productService.Delete(parse_uuid)
 	if err != nil {
 		response.APIResponse(c, http.StatusInternalServerError, "Failed to delete product", err)
 		return nil

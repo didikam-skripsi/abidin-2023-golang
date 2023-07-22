@@ -1,10 +1,15 @@
 package response
 
-import "gostarter-backend/models"
+import (
+	"gostarter-backend/models"
+
+	"github.com/google/uuid"
+)
 
 type UserResponse struct {
-	ID       uint   `json:"id"`
-	Username string `json:"username"`
+	UUID     uuid.UUID       `json:"uuid"`
+	Username string          `json:"username"`
+	Role     models.RoleType `json:"role"`
 }
 
 func (res UserResponse) Collections(datas []models.User) interface{} {
@@ -12,16 +17,30 @@ func (res UserResponse) Collections(datas []models.User) interface{} {
 
 	for index := range datas {
 		collection = append(collection, UserResponse{
-			ID:       datas[index].ID,
+			UUID:     datas[index].UUID,
 			Username: datas[index].Username,
 		})
 	}
 	return collection
 }
 
-func (res UserResponse) Response(data models.User) interface{} {
+func (res UserResponse) Response(data *models.User) interface{} {
+	if data == nil {
+		return nil
+	}
 	return UserResponse{
-		ID:       data.ID,
+		UUID:     data.UUID,
 		Username: data.Username,
+	}
+}
+
+func (res UserResponse) ResponseWithAccess(data *models.User) interface{} {
+	if data == nil {
+		return nil
+	}
+	return UserResponse{
+		UUID:     data.UUID,
+		Username: data.Username,
+		Role:     data.Role,
 	}
 }
