@@ -5,7 +5,7 @@ import (
 )
 
 type UserCreateRequest struct {
-	Name     string          `validate:"required" json:"fullname"`
+	Name     string          `validate:"required" json:"name"`
 	Username string          `validate:"required" json:"username"`
 	Password string          `validate:"required" json:"password"`
 	Role     models.RoleType `validate:"required,oneof=admin user" json:"role"`
