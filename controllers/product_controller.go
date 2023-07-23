@@ -26,11 +26,17 @@ func (this ProductController) GetPostPaginate(c *fiber.Ctx) error {
 
 	page := c.Query("page", "1")
 	perPage := c.Query("per_page", "10")
+	searchQuery := c.Query("search")
 	pageInt, _ := strconv.Atoi(page)
 	perPageInt, _ := strconv.Atoi(perPage)
-	models.DB.Model(&models.Product{}).Count(&totalRecords)
+	query := models.DB
+	if searchQuery != "" {
+		query = query.Where("name LIKE ?", "%"+searchQuery+"%")
+	}
+	query.Model(&models.Product{}).Count(&totalRecords)
 	offset := (pageInt - 1) * perPageInt
-	query := models.DB.Limit(perPageInt).Offset(offset)
+	// query := models.DB.Limit(perPageInt).Offset(offset)
+	query = query.Limit(perPageInt).Offset(offset)
 	if err := query.Preload("User").Order("id DESC").Find(&products).Error; err != nil {
 		response.APIResponse(c, http.StatusInternalServerError, "Product find failed", err.Error())
 		return nil

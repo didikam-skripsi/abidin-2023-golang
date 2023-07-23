@@ -26,7 +26,7 @@ func (product *Product) BeforeCreate(tx *gorm.DB) (err error) {
 func SeedProducts() error {
 	startTime := time.Now()
 	products := []Product{}
-	for i := 1; i <= 100000; i++ {
+	for i := 1; i <= 100; i++ {
 		product := Product{
 			Name:        fmt.Sprintf("product%d", i),
 			Description: fmt.Sprintf("product%d@example.com", i),
