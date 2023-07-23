@@ -31,7 +31,7 @@ func (this ProductController) GetPostPaginate(c *fiber.Ctx) error {
 	models.DB.Model(&models.Product{}).Count(&totalRecords)
 	offset := (pageInt - 1) * perPageInt
 	query := models.DB.Limit(perPageInt).Offset(offset)
-	if err := query.Preload("User").Find(&products).Error; err != nil {
+	if err := query.Preload("User").Order("id DESC").Find(&products).Error; err != nil {
 		response.APIResponse(c, http.StatusInternalServerError, "Product find failed", err.Error())
 		return nil
 	}
@@ -56,8 +56,9 @@ func (this ProductController) Store(c *fiber.Ctx) error {
 	var input request.ProductRequest
 
 	c.BodyParser(&input)
-	if errs := helper.Validate(input); len(errs) > 0 && errs[0].Error {
-		return response.APIResponse(c, http.StatusBadRequest, "Input field invalid", errs)
+	validator := helper.NewValidator()
+	if errs := validator.Validate(input); len(errs) > 0 && errs[0].Error {
+		return response.APIResponse(c, http.StatusUnprocessableEntity, "Input field invalid", errs)
 	}
 	authUser, err := token.ExtractTokenUser(c)
 	if err != nil {
@@ -97,15 +98,15 @@ func (this ProductController) Show(c *fiber.Ctx) error {
 
 func (this ProductController) Update(c *fiber.Ctx) error {
 	var input request.ProductRequest
-	input_uuid := c.Params("id")
+	input_uuid := c.Params("uuid")
 	parse_uuid, err := uuid.Parse(input_uuid)
 	if err != nil {
 		return response.APIResponse(c, http.StatusBadRequest, "Invalid ID", err)
 	}
-
 	c.BodyParser(&input)
-	if errs := helper.Validate(input); len(errs) > 0 && errs[0].Error {
-		return response.APIResponse(c, http.StatusBadRequest, "Input field invalid", errs)
+	validator := helper.NewValidator()
+	if errs := validator.Validate(input); len(errs) > 0 && errs[0].Error {
+		return response.APIResponse(c, http.StatusUnprocessableEntity, "Input field invalid", errs)
 	}
 	product, err := this.productService.Show(parse_uuid)
 	if err != nil {

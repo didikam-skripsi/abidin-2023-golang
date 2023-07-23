@@ -13,25 +13,41 @@ func SetupRouter() *fiber.App {
 	HomeController := controllers.HomeController{}
 	AuthController := controllers.AuthController{}
 	ProductController := controllers.ProductController{}
+	UserController := controllers.UserController{}
 
 	app := fiber.New()
 	app.Use(cors.New())
 
 	app.Get("/home", HomeController.Index)
 
-	public := app.Group("/api")
+	api := app.Group("/api")
 	{
-		public.Post("/register", AuthController.Register)
-		public.Post("/login", AuthController.Login)
-		auth := app.Group("/api/admin")
-		auth.Use(middlewares.JwtAuthMiddleware())
-		auth.Get("/user", AuthController.CurrentUser)
-		auth.Use(middlewares.JwtAuthRolesMiddleware(models.RoleAdmin))
-		auth.Get("/product", ProductController.GetPostPaginate)
-		auth.Post("/product", ProductController.Store)
-		auth.Get("/product/:uuid", ProductController.Show)
-		auth.Put("/product/:uuid", ProductController.Update)
-		auth.Delete("/product/:uuid", ProductController.Delete)
+		api.Post("/register", AuthController.Register)
+		api.Post("/login", AuthController.Login)
+		jwt := api.Use(middlewares.JwtAuthMiddleware())
+		{
+			auth := jwt.Group("/auth")
+			{
+				auth.Get("/user", AuthController.CurrentUser)
+			}
+			admin := jwt.Group("admin")
+			adminProduct := admin.Use(middlewares.JwtAuthRolesMiddleware(models.RoleAdmin, models.RoleUser))
+			{
+				adminProduct.Get("/product", ProductController.GetPostPaginate)
+				adminProduct.Post("/product", ProductController.Store)
+				adminProduct.Get("/product/:uuid", ProductController.Show)
+				adminProduct.Put("/product/:uuid", ProductController.Update)
+				adminProduct.Delete("/product/:uuid", ProductController.Delete)
+			}
+			adminUser := admin.Use(middlewares.JwtAuthRolesMiddleware(models.RoleAdmin))
+			{
+				adminUser.Get("/user", UserController.GetPostPaginate)
+				adminUser.Post("/user", UserController.Store)
+				adminUser.Get("/user/:uuid", UserController.Show)
+				adminUser.Put("/user/:uuid", UserController.Update)
+				adminUser.Delete("/user/:uuid", UserController.Delete)
+			}
+		}
 	}
 
 	return app

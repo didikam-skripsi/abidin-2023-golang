@@ -12,6 +12,7 @@ import (
 type User struct {
 	gorm.Model
 	UUID     uuid.UUID `gorm:"size:36;not null;unique" json:"uuid"`
+	Name     string    `gorm:"size:255;not null" json:"name"`
 	Username string    `gorm:"size:255;not null;unique" json:"username"`
 	Password string    `gorm:"size:255;not null;" json:"password"`
 	Role     RoleType  `gorm:"not null;default:'user'" json:"role"`

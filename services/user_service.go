@@ -2,11 +2,13 @@ package services
 
 import (
 	"errors"
+	"fmt"
 	"gostarter-backend/helpers/token"
 	"gostarter-backend/models"
 	"gostarter-backend/request"
 
 	"github.com/google/uuid"
+	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -65,4 +67,64 @@ func (this UserService) LoginCheck(input request.LoginRequest) (string, error) {
 
 	return token, nil
 
+}
+
+func (s UserService) Show(UUID uuid.UUID) (models.User, error) {
+	var user models.User
+	if err := models.DB.Where("uuid = ?", UUID).First(&user).Error; err != nil {
+		return user, err
+	}
+	return user, nil
+}
+
+func (s UserService) IsExists(username string) (bool, error) {
+	var user models.User
+	if err := models.DB.Where("username = ?", username).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
+func (s UserService) Store(input request.UserCreateRequest) (models.User, error) {
+	user := models.User{
+		Name:     input.Name,
+		Username: input.Username,
+		Password: input.Password,
+		Role:     input.Role,
+	}
+
+	err := models.DB.Create(&user).Error
+	if err != nil {
+		return user, err
+	}
+
+	return user, nil
+}
+
+func (s UserService) Update(UUID uuid.UUID, input request.UserUpdateRequest) (models.User, error) {
+	user := models.User{
+		Name:     input.Name,
+		Username: input.Username,
+		Role:     input.Role,
+	}
+	if input.Password != "" {
+		user.Password = input.Password
+	}
+	if models.DB.Model(&user).Where("uuid = ?", UUID).Updates(&user).RowsAffected == 0 {
+		return user, fmt.Errorf("failed to update data with UUID %d", UUID)
+	}
+	user.UUID = UUID
+	return user, nil
+}
+
+func (s UserService) Delete(UUID uuid.UUID) error {
+	user := models.User{}
+	// Melakukan hard delete pada data dengan UUID tertentu
+	if models.DB.Unscoped().Where("uuid = ?", UUID).Delete(&user).RowsAffected == 0 {
+		return fmt.Errorf("failed to delete data with UUID %d", UUID)
+	}
+	return nil
 }

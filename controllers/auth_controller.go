@@ -21,8 +21,9 @@ func (this AuthController) Register(c *fiber.Ctx) error {
 	var input request.RegisterRequest
 
 	c.BodyParser(&input)
-	if errs := helper.Validate(input); len(errs) > 0 && errs[0].Error {
-		return response.APIResponse(c, http.StatusBadRequest, "Input field invalid", errs)
+	validator := helper.NewValidator()
+	if errs := validator.Validate(input); len(errs) > 0 && errs[0].Error {
+		return response.APIResponse(c, http.StatusUnprocessableEntity, "Input field invalid", errs)
 	}
 
 	user, err := this.userService.Register(input)
@@ -39,8 +40,9 @@ func (this AuthController) Register(c *fiber.Ctx) error {
 func (this AuthController) Login(c *fiber.Ctx) error {
 	var input request.LoginRequest
 	c.BodyParser(&input)
-	if errs := helper.Validate(input); len(errs) > 0 && errs[0].Error {
-		return response.APIResponse(c, http.StatusBadRequest, "Input field invalid", errs)
+	validator := helper.NewValidator()
+	if errs := validator.Validate(input); len(errs) > 0 && errs[0].Error {
+		return response.APIResponse(c, http.StatusUnprocessableEntity, "Input field invalid", errs)
 	}
 
 	token, err := this.userService.LoginCheck(input)
