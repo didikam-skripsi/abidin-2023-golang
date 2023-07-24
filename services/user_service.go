@@ -120,6 +120,21 @@ func (s UserService) Update(UUID uuid.UUID, input request.UserUpdateRequest) (mo
 	return user, nil
 }
 
+func (s UserService) UpdateProfile(UUID uuid.UUID, input request.ProfileUpdateRequest) (models.User, error) {
+	user := models.User{
+		Name:     input.Name,
+		Username: input.Username,
+	}
+	if input.Password != "" {
+		user.Password = input.Password
+	}
+	if models.DB.Model(&user).Where("uuid = ?", UUID).Updates(&user).RowsAffected == 0 {
+		return user, fmt.Errorf("failed to update data with UUID %d", UUID)
+	}
+	user.UUID = UUID
+	return user, nil
+}
+
 func (s UserService) Delete(UUID uuid.UUID) error {
 	user := models.User{}
 	// Melakukan hard delete pada data dengan UUID tertentu

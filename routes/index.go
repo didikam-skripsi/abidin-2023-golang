@@ -29,6 +29,7 @@ func SetupRouter() *fiber.App {
 			auth := jwt.Group("/auth")
 			{
 				auth.Get("/user", AuthController.CurrentUser)
+				auth.Put("/profile", AuthController.Profile)
 			}
 			admin := jwt.Group("admin")
 			adminProduct := admin.Group("product").Use(middlewares.JwtAuthRolesMiddleware(models.RoleAdmin, models.RoleUser))

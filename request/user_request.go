@@ -17,3 +17,9 @@ type UserUpdateRequest struct {
 	Password string
 	Role     models.RoleType `validate:"required,oneof=admin operator" json:"role"`
 }
+
+type ProfileUpdateRequest struct {
+	Name     string `validate:"required" json:"name"`
+	Username string `validate:"required" json:"username"`
+	Password string
+}
