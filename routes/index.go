@@ -10,15 +10,15 @@ import (
 )
 
 func SetupRouter() *fiber.App {
-	HomeController := controllers.HomeController{}
+	// HomeController := controllers.HomeController{}
 	AuthController := controllers.AuthController{}
 	ProductController := controllers.ProductController{}
 	UserController := controllers.UserController{}
 
 	app := fiber.New()
 	app.Use(cors.New())
-
-	app.Get("/home", HomeController.Index)
+	app.Static("/", "./public")
+	// app.Get("/", HomeController.Index)
 
 	api := app.Group("/api")
 	{
