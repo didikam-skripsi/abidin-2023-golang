@@ -10,6 +10,7 @@ import (
 func main() {
 	models.ConnectDataBase()
 	// models.SeedProducts()
+	// models.SeedUsers()
 	app := routes.SetupRouter()
 	port := os.Getenv("APP_PORT")
 	if port == "" {

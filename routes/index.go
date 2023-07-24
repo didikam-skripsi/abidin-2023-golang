@@ -31,21 +31,21 @@ func SetupRouter() *fiber.App {
 				auth.Get("/user", AuthController.CurrentUser)
 			}
 			admin := jwt.Group("admin")
-			adminProduct := admin.Use(middlewares.JwtAuthRolesMiddleware(models.RoleAdmin, models.RoleUser))
+			adminProduct := admin.Group("product").Use(middlewares.JwtAuthRolesMiddleware(models.RoleAdmin, models.RoleUser))
 			{
-				adminProduct.Get("/product", ProductController.GetPostPaginate)
-				adminProduct.Post("/product", ProductController.Store)
-				adminProduct.Get("/product/:uuid", ProductController.Show)
-				adminProduct.Put("/product/:uuid", ProductController.Update)
-				adminProduct.Delete("/product/:uuid", ProductController.Delete)
+				adminProduct.Get("", ProductController.GetPostPaginate)
+				adminProduct.Post("", ProductController.Store)
+				adminProduct.Get("/:uuid", ProductController.Show)
+				adminProduct.Put("/:uuid", ProductController.Update)
+				adminProduct.Delete("/:uuid", ProductController.Delete)
 			}
-			adminUser := admin.Use(middlewares.JwtAuthRolesMiddleware(models.RoleAdmin))
+			adminUser := admin.Group("user").Use(middlewares.JwtAuthRolesMiddleware(models.RoleOperator, models.RoleAdmin))
 			{
-				adminUser.Get("/user", UserController.GetPostPaginate)
-				adminUser.Post("/user", UserController.Store)
-				adminUser.Get("/user/:uuid", UserController.Show)
-				adminUser.Put("/user/:uuid", UserController.Update)
-				adminUser.Delete("/user/:uuid", UserController.Delete)
+				adminUser.Get("", UserController.GetPostPaginate)
+				adminUser.Post("", UserController.Store)
+				adminUser.Get("/:uuid", UserController.Show)
+				adminUser.Put("/:uuid", UserController.Update)
+				adminUser.Delete("/:uuid", UserController.Delete)
 			}
 		}
 	}
