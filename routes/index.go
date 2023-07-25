@@ -12,8 +12,9 @@ import (
 func SetupRouter() *fiber.App {
 	// HomeController := controllers.HomeController{}
 	AuthController := controllers.AuthController{}
-	ProductController := controllers.ProductController{}
 	UserController := controllers.UserController{}
+	KelasController := controllers.KelasController{}
+	SiswaController := controllers.SiswaController{}
 
 	app := fiber.New()
 	app.Use(cors.New())
@@ -32,15 +33,19 @@ func SetupRouter() *fiber.App {
 				auth.Put("/profile", AuthController.Profile)
 			}
 			admin := jwt.Group("admin")
-			adminProduct := admin.Group("product").Use(middlewares.JwtAuthRolesMiddleware(models.RoleAdmin, models.RoleUser))
+			adminKelas := admin.Group("kelas").Use(middlewares.JwtAuthRolesMiddleware(models.RoleAdmin, models.RoleOperator))
 			{
-				adminProduct.Get("", ProductController.GetPostPaginate)
-				adminProduct.Post("", ProductController.Store)
-				adminProduct.Get("/:uuid", ProductController.Show)
-				adminProduct.Put("/:uuid", ProductController.Update)
-				adminProduct.Delete("/:uuid", ProductController.Delete)
+				adminKelas.Get("", KelasController.Index)
 			}
-			adminUser := admin.Group("user").Use(middlewares.JwtAuthRolesMiddleware(models.RoleOperator, models.RoleAdmin))
+			adminSiswa := admin.Group("siswa").Use(middlewares.JwtAuthRolesMiddleware(models.RoleAdmin, models.RoleOperator))
+			{
+				adminSiswa.Get("", SiswaController.GetPaginate)
+				adminSiswa.Post("", SiswaController.Store)
+				adminSiswa.Get("/:uuid", SiswaController.Show)
+				adminSiswa.Put("/:uuid", SiswaController.Update)
+				adminSiswa.Delete("/:uuid", SiswaController.Delete)
+			}
+			adminUser := admin.Group("user").Use(middlewares.JwtAuthRolesMiddleware(models.RoleAdmin))
 			{
 				adminUser.Get("", UserController.GetPostPaginate)
 				adminUser.Post("", UserController.Store)
