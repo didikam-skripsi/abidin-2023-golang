@@ -22,7 +22,6 @@ func SetupRouter() *fiber.App {
 
 	app := fiber.New()
 	app.Use(cors.New())
-	app.Static("/", "./public")
 	// app.Get("/", HomeController.Index)
 
 	api := app.Group("/api")
@@ -82,5 +81,9 @@ func SetupRouter() *fiber.App {
 		}
 	}
 
+	app.Static("/", "./public")
+	app.Get("/*", func(ctx *fiber.Ctx) error {
+		return ctx.SendFile("./public/index.html", true)
+	})
 	return app
 }
