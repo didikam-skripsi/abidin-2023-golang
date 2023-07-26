@@ -38,8 +38,11 @@ func ConnectDataBase() {
 		fmt.Println("We are connected to the database ", Dbdriver)
 	}
 	models := []interface{}{
+		&Attribute{},
+		&Transformasi{},
 		&Kelas{},
 		&Siswa{},
+		&Nilai{},
 		&User{},
 	}
 

@@ -15,6 +15,9 @@ func SetupRouter() *fiber.App {
 	UserController := controllers.UserController{}
 	KelasController := controllers.KelasController{}
 	SiswaController := controllers.SiswaController{}
+	NilaiController := controllers.NewNilaiController()
+	TransformasiController := controllers.NewTransformasiController()
+	AttributeController := controllers.NewAttributeController()
 
 	app := fiber.New()
 	app.Use(cors.New())
@@ -37,6 +40,12 @@ func SetupRouter() *fiber.App {
 			{
 				adminKelas.Get("", KelasController.Index)
 			}
+			adminAttribute := admin.Group("attribute").Use(middlewares.JwtAuthRolesMiddleware(models.RoleAdmin, models.RoleOperator))
+			{
+				adminAttribute.Get("", AttributeController.GetPaginate)
+				adminAttribute.Get("/:uuid", AttributeController.Show)
+				adminAttribute.Put("/:uuid", AttributeController.Update)
+			}
 			adminSiswa := admin.Group("siswa").Use(middlewares.JwtAuthRolesMiddleware(models.RoleAdmin, models.RoleOperator))
 			{
 				adminSiswa.Get("", SiswaController.GetPaginate)
@@ -44,6 +53,17 @@ func SetupRouter() *fiber.App {
 				adminSiswa.Get("/:uuid", SiswaController.Show)
 				adminSiswa.Put("/:uuid", SiswaController.Update)
 				adminSiswa.Delete("/:uuid", SiswaController.Delete)
+			}
+			adminNilai := admin.Group("nilai").Use(middlewares.JwtAuthRolesMiddleware(models.RoleAdmin, models.RoleOperator))
+			{
+				adminNilai.Get("", NilaiController.GetPaginate)
+				adminNilai.Post("", NilaiController.Store)
+				adminNilai.Get("/:uuid", NilaiController.Show)
+			}
+			adminTransformasi := admin.Group("transformasi").Use(middlewares.JwtAuthRolesMiddleware(models.RoleAdmin, models.RoleOperator))
+			{
+				adminTransformasi.Get("", TransformasiController.GetPaginate)
+				adminTransformasi.Post("/bayes", TransformasiController.Bayes)
 			}
 			adminUser := admin.Group("user").Use(middlewares.JwtAuthRolesMiddleware(models.RoleAdmin))
 			{

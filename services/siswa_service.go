@@ -18,7 +18,7 @@ func (s SiswaService) Store(UserUuid uuid.UUID, input request.SiswaRequest) (mod
 	}
 	err := models.DB.Create(&siswa).Error
 	if err != nil {
-		return siswa, fmt.Errorf("gagal simpan data %d")
+		return siswa, fmt.Errorf("gagal simpan data")
 	}
 	return siswa, nil
 }
@@ -47,7 +47,7 @@ func (s SiswaService) Delete(UUID uuid.UUID) error {
 
 func (s SiswaService) Show(UUID uuid.UUID) (models.Siswa, error) {
 	var siswa models.Siswa
-	if err := models.DB.Preload("Kelas").Where("uuid = ?", UUID).First(&siswa).Error; err != nil {
+	if err := models.DB.Preload("Kelas").Preload("Nilai").Preload("Transformasi").Where("uuid = ?", UUID).First(&siswa).Error; err != nil {
 		return siswa, err
 	}
 

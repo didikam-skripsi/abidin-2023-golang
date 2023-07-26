@@ -7,10 +7,12 @@ import (
 )
 
 type SiswaResponse struct {
-	UUID  uuid.UUID   `json:"uuid"`
-	Name  string      `json:"name"`
-	Nisn  string      `json:"nisn"`
-	Kelas interface{} `json:"kelas"`
+	UUID         uuid.UUID     `json:"uuid"`
+	Name         string        `json:"name"`
+	Nisn         string        `json:"nisn"`
+	Transformasi interface{}   `json:"transformasi"`
+	Kelas        interface{}   `json:"kelas"`
+	Nilai        *models.Nilai `json:"nilai"`
 }
 
 func (res SiswaResponse) Collections(datas []models.Siswa) interface{} {
@@ -26,5 +28,7 @@ func (this SiswaResponse) Response(data models.Siswa) SiswaResponse {
 	this.Name = data.Name
 	this.Nisn = data.Nisn
 	this.Kelas = data.Kelas
+	this.Transformasi = data.Transformasi
+	this.Nilai = NewNilaiResponse().Response(data.Nilai)
 	return this
 }

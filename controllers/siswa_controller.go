@@ -36,7 +36,7 @@ func (this SiswaController) GetPaginate(c *fiber.Ctx) error {
 	query.Model(&models.Siswa{}).Count(&totalRecords)
 	offset := (pageInt - 1) * perPageInt
 	query = query.Limit(perPageInt).Offset(offset)
-	if err := query.Preload("Kelas").Order("id DESC").Find(&siswas).Error; err != nil {
+	if err := query.Preload("Kelas").Order("id ASC").Find(&siswas).Error; err != nil {
 		response.APIResponse(c, http.StatusInternalServerError, "Gagal ambil data", err.Error())
 		return nil
 	}
