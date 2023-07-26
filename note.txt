@@ -13,8 +13,9 @@ go build
 export GOOS=windows
 export GOARCH=amd64
 
+go build -o skripsi_abidin.exe main.go
+
 unset GOOS
 unset GOARCH
 
-go build -o start_abidin.exe main.go
 
