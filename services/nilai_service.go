@@ -38,7 +38,7 @@ func (s NilaiService) Update(input request.NilaiRequest) (models.Nilai, error) {
 		Class:     input.Class,
 	}
 	if input.Class == "" {
-		nilai.Class = "-"
+		nilai.Class = ""
 	}
 	if models.DB.Model(&nilai).Where("siswa_uuid = ?", input.SiswaUuid).Updates(&nilai).RowsAffected == 0 {
 		return nilai, fmt.Errorf("gagal update data dengan SiswaUuid %d", input.SiswaUuid)
