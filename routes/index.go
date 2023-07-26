@@ -18,6 +18,7 @@ func SetupRouter() *fiber.App {
 	NilaiController := controllers.NewNilaiController()
 	TransformasiController := controllers.NewTransformasiController()
 	AttributeController := controllers.NewAttributeController()
+	DashboardController := controllers.NewsDashboardController()
 
 	app := fiber.New()
 	app.Use(cors.New())
@@ -36,6 +37,11 @@ func SetupRouter() *fiber.App {
 				auth.Put("/profile", AuthController.Profile)
 			}
 			admin := jwt.Group("admin")
+			adminDashboard := admin.Group("dashboard").Use(middlewares.JwtAuthRolesMiddleware(models.RoleAdmin, models.RoleOperator))
+			{
+				adminDashboard.Get("donut", DashboardController.Donut)
+				adminDashboard.Get("column", DashboardController.Column)
+			}
 			adminKelas := admin.Group("kelas").Use(middlewares.JwtAuthRolesMiddleware(models.RoleAdmin, models.RoleOperator))
 			{
 				adminKelas.Get("", KelasController.Index)
